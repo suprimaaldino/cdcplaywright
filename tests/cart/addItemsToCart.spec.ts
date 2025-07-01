@@ -1,19 +1,52 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { LoginPage } from '../../pages/loginPage';
 import { InventoryPage } from '../../pages/inventoryPage';
-import { loginStandardUser } from '../../login/loginStandardUser';
+import { CartPage } from '../../pages/cartPage';
+import { credentials } from '../../testData/testData';
 
-test.beforeEach(async ({ page }) => {
-   await loginStandardUser(page);
-});
+test.describe('addSingleItemToCart', () => {
+    let loginPage: LoginPage;
+    let inventoryPage: InventoryPage;
+    let cartPage: CartPage;
 
-test('itmAdd: Add T-Shirt and Fleece Jacket to cart', async ({ page }) => {
-  // Inventory page assumes user is already logged in via beforeEach
-  const inventoryPage = new InventoryPage(page);
+    test.beforeEach(async ({ page }) => {
+        loginPage = new LoginPage(page);
+        inventoryPage = new InventoryPage(page);
+        cartPage = new CartPage(page);
 
-  // Add selected items to cart
-  await inventoryPage.addItem('[data-test="add-to-cart-sauce-labs-bolt-t-shirt"]');
-  await inventoryPage.addItem('[data-test="add-to-cart-sauce-labs-fleece-jacket"]');
+        await loginPage.goto();
+        await loginPage.login(
+            credentials.standardUser.username, 
+            credentials.standardUser.password
+        );
+        await inventoryPage.verifyPageLoaded();
+    });
 
-  // Verify the cart badge displays correct number of items
-  await inventoryPage.verifyCartCount('2');
+    test('addSauceLabsBackpackToCartAndVerify', async () => {
+        const productName = 'Sauce Labs Backpack';
+
+        await inventoryPage.addProductToCart(productName);
+        await inventoryPage.verifyCartCount(1);
+
+        await inventoryPage.navigateToCart();
+        await cartPage.verifyPageLoaded();
+
+        await cartPage.verifyItemInCart(productName);
+        await cartPage.verifyItemCount(1);
+        await cartPage.verifyCartBadgeCount(1);
+    });
+
+    test('addAndRemoveSauceLabsBackpackFromCart', async () => {
+        const productName = 'Sauce Labs Backpack';
+
+        await inventoryPage.addProductToCart(productName);
+        await inventoryPage.verifyCartCount(1);
+
+        await inventoryPage.removeProductFromCart(productName);
+        await inventoryPage.verifyCartCount(0);
+
+        await inventoryPage.navigateToCart();
+        await cartPage.verifyItemNotInCart(productName);
+        expect(await cartPage.isCartEmpty()).toBeTruthy();
+    });
 });
