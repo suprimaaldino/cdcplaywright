@@ -4,7 +4,7 @@ import { InventoryPage } from '../../pages/inventoryPage';
 import { CartPage } from '../../pages/cartPage';
 import { credentials } from '../../testData/testData';
 
-test.describe('cartManagementTests', () => {
+test.describe('cartManagementTests @reg', () => {
     let loginPage: LoginPage;
     let inventoryPage: InventoryPage;
     let cartPage: CartPage;
@@ -22,7 +22,7 @@ test.describe('cartManagementTests', () => {
         await inventoryPage.verifyPageLoaded();
     });
 
-    test.describe('multipleItemsOperations', () => {
+    test.describe('multipleItemsOperations @reg', () => {
         const testProducts = [
             'Sauce Labs Backpack',
             'Sauce Labs Bike Light',
