@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { urls } from './testData';
 
 export class LoginPage {
@@ -24,5 +24,10 @@ export class LoginPage {
     await this.passwordInput.click();
     await this.passwordInput.fill(password);
     await this.loginButton.click();
+  }
+
+  async expectLockedOutError() {
+    const errorMessage = this.page.locator('[data-test="error"]');
+    await expect(errorMessage).toHaveText('Epic sadface: Sorry, this user has been locked out.');
   }
 }
