@@ -18,5 +18,7 @@ export const credentials = {
 };
 
 export const urls = {
-  loginPage: 'https://www.saucedemo.com/v1/',
+    loginPage: 'https://www.saucedemo.com/v1/',
+    inventoryPage: 'https://www.saucedemo.com/v1/inventory.html' 
 };
+

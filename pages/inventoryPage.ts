@@ -15,17 +15,18 @@ export class InventoryPage {
     }
 
     async goto(): Promise<void> {
-        await this.page.goto(urls.loginPage);
+        await this.page.goto(urls.inventoryPage);
         await this.verifyPageLoaded();
     }
+
 
     async addProductToCart(productName: string): Promise<void> {
         const itemContainer = this.getProductContainer(productName);
         const addToCartButton = itemContainer.getByRole('button', { name: 'ADD TO CART' });
-        
+
         await expect(addToCartButton).toBeVisible();
         await addToCartButton.click();
-        
+
         const removeButton = itemContainer.getByRole('button', { name: 'REMOVE' });
         await expect(removeButton).toBeVisible({ timeout: 5000 });
     }
@@ -33,25 +34,25 @@ export class InventoryPage {
     async removeProductFromCart(productName: string): Promise<void> {
         const itemContainer = this.getProductContainer(productName);
         const removeButton = itemContainer.getByRole('button', { name: 'REMOVE' });
-        
+
         await expect(removeButton).toBeVisible();
         await removeButton.click();
-        
+
         const addToCartButton = itemContainer.getByRole('button', { name: 'ADD TO CART' });
         await expect(addToCartButton).toBeVisible({ timeout: 5000 });
     }
 
     private getProductContainer(productName: string): Locator {
         return this.page.locator('div.inventory_item')
-            .filter({ 
+            .filter({
                 has: this.page.getByText(productName, { exact: true })
-                    .locator('xpath=./ancestor::div[@class="inventory_item"]') 
+                    .locator('xpath=./ancestor::div[@class="inventory_item"]')
             });
     }
 
     async getCartCount(): Promise<number> {
-        return await this.shoppingCartBadge.isVisible() 
-            ? Number(await this.shoppingCartBadge.textContent()) 
+        return await this.shoppingCartBadge.isVisible()
+            ? Number(await this.shoppingCartBadge.textContent())
             : 0;
     }
 
@@ -73,5 +74,17 @@ export class InventoryPage {
         await expect(this.page).toHaveURL(/inventory\.html/);
         await expect(this.productsTitle).toBeVisible();
         await expect(this.productsTitle).toHaveText('Products');
+    }
+
+
+    async getAllProductNames(): Promise<string[]> {
+        await this.page.waitForSelector('.inventory_item_name');
+        const productElements = await this.page.locator('.inventory_item_name').all();
+        return Promise.all(
+            productElements.map(async (element) => {
+                const name = await element.textContent();
+                return name?.trim() || '';
+            })
+        );
     }
 }
