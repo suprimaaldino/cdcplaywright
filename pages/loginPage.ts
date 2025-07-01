@@ -1,5 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
-import { urls } from './testData';
+import { urls } from '../testData/testData';
 
 export class LoginPage {
   readonly page: Page;
@@ -19,15 +19,22 @@ export class LoginPage {
   }
 
   async login(username: string, password: string) {
-    await this.usernameInput.click();
     await this.usernameInput.fill(username);
-    await this.passwordInput.click();
     await this.passwordInput.fill(password);
     await this.loginButton.click();
   }
-
   async expectLockedOutError() {
-    const errorMessage = this.page.locator('[data-test="error"]');
-    await expect(errorMessage).toHaveText('Epic sadface: Sorry, this user has been locked out.');
+    await this.expectErrorMessage('Epic sadface: Sorry, this user has been locked out.');
+    // Verify user is still on login page
+    await expect(this.page).toHaveURL(urls.loginPage);
+  }
+
+  async expectErrorMessage(expectedMessage: string) {
+    await expect(this.errorMessage).toBeVisible({ timeout: 5000 });
+    await expect(this.errorMessage).toHaveText(expectedMessage);
+  }
+
+  get errorMessage() {
+    return this.page.locator('[data-test="error"], .error-message-container');
   }
 }
