@@ -41,3 +41,14 @@ runs:
           echo '<meta http-equiv="refresh" content="0; url=report.html">' > ${{ inputs.output-dir }}/index.html
         fi
       shell: bash
+
+    - run: |
+        echo "==== List merged-report after merge ===="
+        ls -l ${{ inputs.output-dir }}
+      shell: bash
+
+    - run: |
+        if [ ! -f ${{ inputs.output-dir }}/index.html ]; then
+          echo '<meta http-equiv="refresh" content="0; url=report.html">' > ${{ inputs.output-dir }}/index.html
+        fi
+      shell: bash
