@@ -64,16 +64,26 @@ jobs:
         run: |
           if [[ ${{ github.event_name }} == 'push' && ${{ github.ref }} == 'refs/heads/main' ]]; then
             npx playwright test tests/visualTest/ --update-snapshots
+            # Commit updated snapshots for main branch
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "actions@github.com"
+            git add tests/visualTest/*-snapshots/
+            git commit -m "Update visual regression snapshots [skip ci]" || echo "No snapshot changes to commit"
+            git push
           else
             npx playwright test tests/visualTest/
           fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload visual report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: visual-test-report
-          path: playwright-report/
+          path: |
+            playwright-report/
+            tests/visualTest/*-snapshots/
           retention-days: 7
 
   merge-report:
@@ -82,29 +92,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download shard 1
+      - name: Download all shard reports
         uses: actions/download-artifact@v4
         with:
-          name: playwright-report-1
           path: playwright-reports
-
-      - name: Download shard 2
-        uses: actions/download-artifact@v4
-        with:
-          name: playwright-report-2
-          path: playwright-reports
-
-      - name: Download shard 3
-        uses: actions/download-artifact@v4
-        with:
-          name: playwright-report-3
-          path: playwright-reports
+          pattern: playwright-report-*
+          merge-multiple: true
 
       - name: Install merge tool
         run: npm install -D playwright-merge-html-reports
 
       - name: Merge Playwright reports
-        run: npx playwright-merge-html-reports --reportDir playwright-reports --output merged-report
+        run: npx playwright-merge-html-reports --input playwright-reports --output merged-report
 
       - name: Upload merged report
         uses: actions/upload-artifact@v4
@@ -115,6 +114,7 @@ jobs:
   deploy-report:
     needs: merge-report
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
