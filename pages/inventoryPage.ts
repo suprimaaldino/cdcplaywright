@@ -2,7 +2,7 @@ import { Page, Locator, expect } from '@playwright/test';
 import { urls } from '../testData/testData';
 
 export class InventoryPage {
-    private readonly page: Page;
+    readonly page: Page;
     readonly productsTitle: Locator;
     readonly shoppingCartBadge: Locator;
     readonly shoppingCartLink: Locator;

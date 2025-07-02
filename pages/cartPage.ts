@@ -1,13 +1,13 @@
 import { Page, Locator, expect } from '@playwright/test';
 
 export class CartPage {
-    private readonly page: Page;
-    private readonly cartList: Locator;
-    private readonly cartItems: Locator;
-    private readonly continueShoppingButton: Locator;
-    private readonly checkoutButton: Locator;
-    private readonly cartBadge: Locator;
-    private readonly cartTitle: Locator;
+    readonly page: Page;
+    readonly cartList: Locator;
+    readonly cartItems: Locator;
+    readonly continueShoppingButton: Locator;
+    readonly checkoutButton: Locator;
+    readonly cartBadge: Locator;
+    readonly cartTitle: Locator;
 
     constructor(page: Page) {
         this.page = page;
