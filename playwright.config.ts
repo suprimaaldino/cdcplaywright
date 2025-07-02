@@ -27,11 +27,9 @@ export default defineConfig({
     ['blob'], 
     ['list'],
     ['html', {
-      outputFolder: process.env.TEST_SHARD
-        ? `playwright-report/shard-${process.env.TEST_SHARD}`
-        : 'playwright-report'
+      // CI optimization: Use a consistent output folder for all shards to simplify upload & merge in GitHub Actions
+      outputFolder: 'playwright-report'
     }]
-
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -63,14 +61,14 @@ export default defineConfig({
     // },
 
     /* Test against mobile viewports. */
-    //{
-     // name: 'Mobile Chrome',
-     // use: { ...devices['Pixel 5'] },
-   // },
-   // {
-   //   name: 'Mobile Safari',
-    //  use: { ...devices['iPhone 12'] },
-   // },
+    // {
+    //   name: 'Mobile Chrome',
+    //   use: { ...devices['Pixel 5'] },
+    // },
+    // {
+    //   name: 'Mobile Safari',
+    //   use: { ...devices['iPhone 12'] },
+    // },
 
     /* Test against branded browsers. */
     // {
@@ -89,5 +87,4 @@ export default defineConfig({
   //   url: 'http://localhost:3000',
   //   reuseExistingServer: !process.env.CI,
   // },
-
 });
