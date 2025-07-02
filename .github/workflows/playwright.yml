@@ -43,6 +43,25 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  merge-playwright-report:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Jalankan composite action
+        uses: ./.github/actions/merge-report-action
+        with:
+          input-dir: playwright-reports
+          output-dir: merged-report
+          artifact-pattern: reportShard00*
+
+      - name: Upload merged report
+        uses: actions/upload-artifact@v4
+        with:
+          name: merged-playwright-report
+          path: merged-report/
+
   # visual-test:
   #   needs: test
   #   runs-on: ubuntu-latest
@@ -86,41 +105,10 @@ jobs:
   #           tests/visualTest/*-snapshots/
   #         retention-days: 7
 
-  merge-report:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Install merge tool
-        run: npm install playwright-merge-html-reports --save-dev
-
-      - name: Download all shard reports
-        uses: actions/download-artifact@v4
-        with:
-          path: playwright-reports
-          pattern: playwright-report-*
-          merge-multiple: true
-
-      - name: Merge Playwright reports
-        run: |
-          npx playwright-merge-html-reports \
-            --input playwright-reports \
-            --output merged-report \
-            --overwrite
-          
-          # Verify merged report exists
-          ls -la merged-report/
-
-      - name: Upload merged report
-        uses: actions/upload-artifact@v4
-        with:
-          name: merged-playwright-report
-          path: merged-report/
-          retention-days: 7
-
+        
   deploy-report:
-    needs: merge-report
+    needs: merge-playwright-report
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
