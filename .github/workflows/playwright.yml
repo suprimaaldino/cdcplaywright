@@ -43,6 +43,39 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  visual-test:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run visual regression tests
+        run: |
+          if [[ ${{ github.event_name }} == 'push' && ${{ github.ref }} == 'refs/heads/main' ]]; then
+            npx playwright test tests/visualTest/ --update-snapshots
+          else
+            npx playwright test tests/visualTest/
+          fi
+
+      - name: Upload visual report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-test-report
+          path: playwright-report/
+          retention-days: 7
+
   merge-report:
     needs: test
     runs-on: ubuntu-latest
