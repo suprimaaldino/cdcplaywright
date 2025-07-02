@@ -92,6 +92,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install merge tool
+        run: npm install playwright-merge-html-reports --save-dev
+
       - name: Download all shard reports
         uses: actions/download-artifact@v4
         with:
@@ -99,17 +102,22 @@ jobs:
           pattern: playwright-report-*
           merge-multiple: true
 
-      - name: Install merge tool
-        run: npm install -D playwright-merge-html-reports
-
       - name: Merge Playwright reports
-        run: npx playwright-merge-html-reports --input playwright-reports --output merged-report
+        run: |
+          npx playwright-merge-html-reports \
+            --input playwright-reports \
+            --output merged-report \
+            --overwrite
+          
+          # Verify merged report exists
+          ls -la merged-report/
 
       - name: Upload merged report
         uses: actions/upload-artifact@v4
         with:
           name: merged-playwright-report
           path: merged-report/
+          retention-days: 7
 
   deploy-report:
     needs: merge-report
@@ -129,3 +137,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: merged-report/
+          keep_files: true
