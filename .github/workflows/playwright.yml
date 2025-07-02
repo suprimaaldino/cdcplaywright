@@ -54,7 +54,7 @@ jobs:
         with:
           input-dir: playwright-reports
           output-dir: merged-report
-          artifact-pattern: reportShard00*
+          artifact-pattern: playwright-report-*
 
       - name: Upload merged report
         uses: actions/upload-artifact@v4
@@ -62,51 +62,6 @@ jobs:
           name: merged-playwright-report
           path: merged-report/
 
-  # visual-test:
-  #   needs: test
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-  #         cache: 'npm'
-
-  #     - name: Install dependencies
-  #       run: npm ci
-
-  #     - name: Install Playwright Browsers
-  #       run: npx playwright install --with-deps
-
-  #     - name: Run visual regression tests
-  #       run: |
-  #         if [[ ${{ github.event_name }} == 'push' && ${{ github.ref }} == 'refs/heads/main' ]]; then
-  #           npx playwright test tests/visualTest/ --update-snapshots
-  #           # Commit updated snapshots for main branch
-  #           git config --global user.name "GitHub Actions"
-  #           git config --global user.email "actions@github.com"
-  #           git add tests/visualTest/*-snapshots/
-  #           git commit -m "Update visual regression snapshots [skip ci]" || echo "No snapshot changes to commit"
-  #           git push
-  #         else
-  #           npx playwright test tests/visualTest/
-  #         fi
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  #     - name: Upload visual report
-  #       if: always()
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: visual-test-report
-  #         path: |
-  #           playwright-report/
-  #           tests/visualTest/*-snapshots/
-  #         retention-days: 7
-
-
-        
   deploy-report:
     needs: merge-playwright-report
     runs-on: ubuntu-latest

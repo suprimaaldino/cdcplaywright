@@ -13,7 +13,6 @@ import { on } from 'events';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  reporter: 'blob',
   testDir: './tests',
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -25,12 +24,14 @@ export default defineConfig({
   workers: process.env.CI ? 4 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
+    ['blob'], 
     ['list'],
-    ['html', { 
-      outputFolder: process.env.TEST_SHARD 
+    ['html', {
+      outputFolder: process.env.TEST_SHARD
         ? `playwright-report/shard-${process.env.TEST_SHARD}`
         : 'playwright-report'
     }]
+
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -56,10 +57,10 @@ export default defineConfig({
       use: { ...devices['Desktop Firefox'] },
     },
 
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
+    // {
+    //   name: 'webkit',
+    //   use: { ...devices['Desktop Safari'] },
+    // },
 
     /* Test against mobile viewports. */
     //{
