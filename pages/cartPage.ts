@@ -100,3 +100,4 @@ export class CartPage {
         return (await this.getItemCount()) === 0;
     }
 };
+
