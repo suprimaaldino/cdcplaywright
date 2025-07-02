@@ -13,6 +13,7 @@ import { on } from 'events';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
+  reporter: 'blob',
   testDir: './tests',
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -87,4 +88,5 @@ export default defineConfig({
   //   url: 'http://localhost:3000',
   //   reuseExistingServer: !process.env.CI,
   // },
+
 });
