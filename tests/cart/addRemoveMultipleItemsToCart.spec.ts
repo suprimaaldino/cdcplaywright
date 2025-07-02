@@ -63,7 +63,8 @@ test.describe('cartManagementTests @reg', () => {
             if (await inventoryPage.getCartCount() > 0) {
                 await inventoryPage.navigateToCart();
                 await cartPage.removeAllItems();
-                await inventoryPage.goto();
+                await inventoryPage.goto()
+        
             }
 
             for (const product of initialProducts) {

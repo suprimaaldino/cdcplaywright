@@ -6,39 +6,47 @@ export class InventoryPage {
     readonly productsTitle: Locator;
     readonly shoppingCartBadge: Locator;
     readonly shoppingCartLink: Locator;
-
+    readonly menuButton: Locator;
+    readonly inventoryItems: Locator;
+    readonly inventoryItemNames: Locator;
+    readonly sortDropdown: Locator;
+    readonly productContainer: (productName: string) => Locator;
+    readonly addToCartButton: (productName: string) => Locator;
+    readonly removeButton: (productName: string) => Locator;
     constructor(page: Page) {
         this.page = page;
+
+        // Static locators
         this.productsTitle = page.locator('div.product_label');
         this.shoppingCartBadge = page.locator('span.shopping_cart_badge');
         this.shoppingCartLink = page.locator('a.shopping_cart_link');
-    }
+        this.menuButton = page.getByRole('button', { name: 'Open Menu' });
+        this.inventoryItems = page.locator('div.inventory_item');
+        this.inventoryItemNames = page.locator('.inventory_item_name');
+        this.sortDropdown = page.locator('.product_sort_container');
+        this.productContainer = (productName: string) =>
+            this.inventoryItems.filter({
+                has: this.page.getByText(productName, { exact: true })
+                    .locator('xpath=./ancestor::div[@class="inventory_item"]')
+            });
 
-    async goto(): Promise<void> {
-        await this.page.goto(urls.inventoryPage);
-        await this.verifyPageLoaded();
+        this.addToCartButton = (productName: string) =>
+            this.productContainer(productName).getByRole('button', { name: 'ADD TO CART' });
+
+        this.removeButton = (productName: string) =>
+            this.productContainer(productName).getByRole('button', { name: 'REMOVE' });
     }
 
     async addProductToCart(productName: string): Promise<void> {
-        const itemContainer = this.getProductContainer(productName);
-        const addToCartButton = itemContainer.getByRole('button', { name: 'ADD TO CART' });
-
-        await expect(addToCartButton).toBeVisible();
-        await addToCartButton.click();
-
-        const removeButton = itemContainer.getByRole('button', { name: 'REMOVE' });
-        await expect(removeButton).toBeVisible({ timeout: 5000 });
+        await expect(this.addToCartButton(productName)).toBeVisible();
+        await this.addToCartButton(productName).click();
+        await expect(this.removeButton(productName)).toBeVisible({ timeout: 5000 });
     }
 
     async removeProductFromCart(productName: string): Promise<void> {
-        const itemContainer = this.getProductContainer(productName);
-        const removeButton = itemContainer.getByRole('button', { name: 'REMOVE' });
-
-        await expect(removeButton).toBeVisible();
-        await removeButton.click();
-
-        const addToCartButton = itemContainer.getByRole('button', { name: 'ADD TO CART' });
-        await expect(addToCartButton).toBeVisible({ timeout: 5000 });
+        await expect(this.removeButton(productName)).toBeVisible();
+        await this.removeButton(productName).click();
+        await expect(this.addToCartButton(productName)).toBeVisible({ timeout: 5000 });
     }
 
     private getProductContainer(productName: string): Locator {
@@ -75,7 +83,6 @@ export class InventoryPage {
         await expect(this.productsTitle).toHaveText('Products');
     }
 
-
     async getAllProductNames(): Promise<string[]> {
         await this.page.waitForSelector('.inventory_item_name');
         const productElements = await this.page.locator('.inventory_item_name').all();
@@ -85,5 +92,10 @@ export class InventoryPage {
                 return name?.trim() || '';
             })
         );
+    }
+
+    async goto(): Promise<void> {
+        await this.page.goto(urls.inventoryPage);
+        await this.verifyPageLoaded();
     }
 }
