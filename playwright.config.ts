@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { on } from 'events';
+// import { on } from 'events'; // Hapus jika tidak terpakai
 
 /**
  * Read environment variables from file.
@@ -24,20 +24,22 @@ export default defineConfig({
   workers: process.env.CI ? 4 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['blob'], 
+    ['blob'],
     ['list'],
     ['html', {
-      // CI optimization: Use a consistent output folder for all shards to simplify upload & merge in GitHub Actions
-      outputFolder: 'playwright-report'
+      // Use dynamic shard folder in CI to avoid overwrite, single folder locally
+      outputFolder: process.env.TEST_SHARD
+        ? `playwright-report/shard-${process.env.TEST_SHARD}`
+        : 'playwright-report'
     }]
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    //video:'on',
-    //launchOptions:{slowMo: 1000},
+    // video: 'on',
+    // launchOptions: { slowMo: 1000 },
     // Slow down operations by 1 second to see the actions in the video
     /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://localhost:3000',
+    // baseURL: process.env.BASE_URL || 'http://localhost:3000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -49,11 +51,10 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
+    // {
+    //   name: 'firefox',
+    //   use: { ...devices['Desktop Firefox'] },
+    // },
 
     // {
     //   name: 'webkit',

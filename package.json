@@ -2,7 +2,6 @@
   "name": "cdcplaywright",
   "version": "1.0.0",
   "description": "Repository for CDC self-learning with Playwright automation",
-  "main": "index.js",
   "scripts": {
     "test": "playwright test",
     "test:chrome": "playwright test --project=chromium",
@@ -29,7 +28,8 @@
     "prepare": "npx playwright install --with-deps",
     "lint": "eslint . --ext .ts",
     "show-report": "npx playwright show-report",
-    "codegen": "npx playwright codegen"
+    "codegen": "npx playwright codegen",
+    "merge-reports": "playwright-merge-html-reports --input ./playwright-reports --output ./merged-report --overwrite"
   },
   "keywords": [
     "automation",

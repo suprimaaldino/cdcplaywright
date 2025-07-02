@@ -49,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Jalankan composite action
+      - name: Merge Playwright Reports
         uses: ./.github/actions/merge-report-action
         with:
           input-dir: playwright-reports
