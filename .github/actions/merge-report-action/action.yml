@@ -30,7 +30,7 @@ runs:
         merge-multiple: true
 
     - run: |
-        npx playwright-merge-html-reports \
+        node ./node_modules/playwright-merge-html-reports/dist/merge-reports.js \
           --input ${{ inputs.input-dir }} \
           --output ${{ inputs.output-dir }} \
           --overwrite
