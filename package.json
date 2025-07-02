@@ -2,9 +2,8 @@
   "name": "cdcplaywright",
   "version": "1.0.0",
   "description": "Repository for CDC self-learning with Playwright automation",
-  "main": "index.js",
-{
-  "scripts": {
+"main": "index.js",
+"scripts": {
     "test": "playwright test",
     "test:chrome": "playwright test --project=chromium",
     "test:firefox": "playwright test --project=firefox",
@@ -36,9 +35,8 @@
     "show-report": "npx playwright show-report",
     "codegen": "npx playwright codegen"
   }
-}
-  "keywords": [
-    "playwright",
+  ,
+"keywords": [
     "automation",
     "testing",
     "CDC"
