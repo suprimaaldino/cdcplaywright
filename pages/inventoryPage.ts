@@ -19,7 +19,6 @@ export class InventoryPage {
         await this.verifyPageLoaded();
     }
 
-
     async addProductToCart(productName: string): Promise<void> {
         const itemContainer = this.getProductContainer(productName);
         const addToCartButton = itemContainer.getByRole('button', { name: 'ADD TO CART' });

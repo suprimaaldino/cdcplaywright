@@ -14,9 +14,10 @@ export class CartPage {
         this.cartList = page.locator('.cart_contents_container');
         this.cartItems = page.locator('.cart_item');
         this.continueShoppingButton = page.getByTestId('continue-shopping');
-        this.checkoutButton = page.getByTestId('checkout');
+        this.checkoutButton = page.locator('a[href*="checkout-step-one"]');
         this.cartBadge = page.locator('.shopping_cart_badge');
         this.cartTitle = page.locator('.subheader');
+
     }
 
     async verifyPageLoaded(): Promise<void> {
@@ -33,7 +34,7 @@ export class CartPage {
     async removeItem(itemName: string): Promise<void> {
         const itemContainer = this.getItemLocator(itemName);
         const removeButton = itemContainer.getByRole('button', { name: 'REMOVE' });
-        
+
         await expect(removeButton).toBeVisible();
         await removeButton.click();
         await expect(itemContainer).not.toBeVisible({ timeout: 5000 });
@@ -97,7 +98,9 @@ export class CartPage {
     }
 
     async isCartEmpty(): Promise<boolean> {
-        return (await this.getItemCount()) === 0;
+        // Adjust the selector to match your cart's empty state
+        const cartItems = await this.page.$$('.cart_item');
+        return cartItems.length === 0;
     }
 };
 

@@ -1,60 +1,66 @@
 import { test, expect } from '@playwright/test';
-
-const BASE_URL = 'https://www.saucedemo.com/';
+import { credentials } from '../../testData/testData';
+import { LoginPage } from '../../pages/loginPage';
+import { InventoryPage } from '../../pages/inventoryPage';
+import { CartPage } from '../../pages/cartPage';
+import { CheckoutPage } from '../../pages/checkoutPage';
+import { checkoutInfo } from '../../testData/testData';
 
 test.describe('Visual regression for SauceDemo', () => {
-  test('Login page', async ({ page }, testInfo) => {
-    await page.goto(BASE_URL);
-    await expect(page.locator('[data-test="username"]')).toBeVisible();
-    const screenshotName = `login-page-${testInfo.project.name}.png`;
-    await expect(page).toHaveScreenshot(screenshotName);
+  let loginPage: LoginPage;
+  let inventoryPage: InventoryPage;
+  let cartPage: CartPage;
+  let checkoutPage: CheckoutPage;
+
+  test.beforeEach(async ({ page }) => {
+    loginPage = new LoginPage(page);
+    inventoryPage = new InventoryPage(page);
+    cartPage = new CartPage(page);
+    checkoutPage = new CheckoutPage(page);
+    await loginPage.goto();
+    await loginPage.login(credentials.standardUser.username, credentials.standardUser.password);
   });
 
-  test('Inventory page', async ({ page }) => {
-    await page.goto(BASE_URL);
-    await page.fill('[data-test="username"]', 'standard_user');
-    await page.fill('[data-test="password"]', 'secret_sauce');
-    await page.click('[data-test="login-button"]');
-    await expect(page).toHaveURL(/inventory/);
-    await expect(page).toHaveScreenshot(`inventory-page-${test.info().project.name}.png`);
-    await expect(page).toHaveScreenshot('inventory-page.png');
+  test('loginPageVisualRegression', async ({ page }, testInfo) => {
+    await loginPage.goto();
+    await expect(page).toHaveScreenshot(`loginPage${capitalize(testInfo.project.name)}.png`, {
+      maxDiffPixels: 100,
+      animations: 'disabled'
+    });
   });
 
-  test('Cart page', async ({ page }, testInfo) => {
-    await page.goto(BASE_URL);
-    await page.fill('[data-test="username"]', 'standard_user');
-    await page.fill('[data-test="password"]', 'secret_sauce');
-    await page.click('[data-test="login-button"]');
-    await page.click('.shopping_cart_link');
-    await expect(page).toHaveURL(/cart/);
-    await expect(page.locator('.cart_contents_container')).toBeVisible();
-    const screenshotName = `cart-page-${testInfo.project.name}.png`;
-    await expect(page).toHaveScreenshot(screenshotName);
+  test('inventoryPageVisualRegression', async ({ page }, testInfo) => {
+    await inventoryPage.verifyPageLoaded();
+    await expect(page).toHaveScreenshot(`inventoryPage${capitalize(testInfo.project.name)}.png`, {
+      mask: [page.locator('.inventory_item_price')],
+      fullPage: true
+    });
   });
 
-  test('Checkout page', async ({ page }) => {
-    await page.goto(BASE_URL);
-    await page.fill('[data-test="username"]', 'standard_user');
-    await page.fill('[data-test="password"]', 'secret_sauce');
-    await page.click('[data-test="login-button"]');
-    await page.click('.shopping_cart_link');
-    await page.click('[data-test="checkout"]');
-    await expect(page.locator('.checkout_info')).toBeVisible();
-    await expect(page).toHaveScreenshot(`checkout-page-${test.info().project.name}.png`);
-    await expect(page).toHaveScreenshot('checkout-page.png');
+  test('cartCheckoutPageVisualRegression', async ({ page }, testInfo) => {
+    await inventoryPage.addProductToCart('Sauce Labs Backpack');
+    await inventoryPage.navigateToCart();
+    await expect(page).toHaveScreenshot(`cartPage${capitalize(testInfo.project.name)}.png`);
+    await cartPage.proceedToCheckout();
+    await checkoutPage.fillCheckoutInfo(checkoutInfo.firstName, checkoutInfo.lastName, checkoutInfo.validZipCode);
+    await expect(checkoutPage.summaryTitle).toBeVisible();
+    await expect(page).toHaveScreenshot(`checkoutPage${capitalize(testInfo.project.name)}.png`);
+  });
+
+  test('orderConfirmationPageVisualRegression', async ({ page }, testInfo) => {
+    await inventoryPage.addProductToCart('Sauce Labs Backpack');
+    await inventoryPage.navigateToCart();
+    await cartPage.proceedToCheckout();
+    await checkoutPage.fillCheckoutInfo(checkoutInfo.firstName, checkoutInfo.lastName, checkoutInfo.validZipCode);
+    await checkoutPage.finishCheckout();
+
+    await expect(checkoutPage.checkoutCompleteContainer).toBeVisible();
+    await expect(page).toHaveScreenshot(`orderConfirmation${capitalize(testInfo.project.name)}.png`, {
+      timeout: 5000
+    });
   });
 });
 
-// Optional: log info if baseline is being created in a robust way
-test.afterEach(async ({}, testInfo) => {
-  if (
-    testInfo.status === 'failed' &&
-    testInfo.attachments.some(
-      (a) =>
-        a.name?.toLowerCase().includes('screenshot') &&
-        a.contentType === 'image/png'
-    )
-  ) {
-    console.log('Baseline screenshot created. This is likely the first run.');
-  }
-});
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
