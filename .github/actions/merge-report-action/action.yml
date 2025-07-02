@@ -20,10 +20,6 @@ runs:
     - run: npm ci && npx playwright install --with-deps
       shell: bash
 
-    # Install with save (optional, for caching), or remove entirely if using npx
-    - run: npm install playwright-merge-html-reports
-      shell: bash
-
     - uses: actions/download-artifact@v4
       with:
         path: ${{ inputs.input-dir }}
