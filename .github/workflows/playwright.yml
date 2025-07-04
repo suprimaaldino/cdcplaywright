@@ -46,26 +46,45 @@ jobs:
   merge-playwright-report:
     needs: test
     runs-on: ubuntu-latest
+    if: always() && needs.test.result != 'cancelled'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Merge Playwright Reports
-        uses: ./.github/actions/merge-report-action
+      - uses: actions/setup-node@v4
         with:
-          input-dir: playwright-reports
-          output-dir: merged-report
-          artifact-pattern: playwright-report-*
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: playwright-report-*
+          path: playwright-reports/
+          merge-multiple: true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Merge Playwright Reports
+        run: |
+          npx playwright merge-reports --reporter html playwright-reports/
+        continue-on-error: true
 
       - name: Upload merged report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: merged-playwright-report
-          path: merged-report/
+          path: playwright-report/
+          retention-days: 30
 
   deploy-report:
     needs: merge-playwright-report
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: always() && github.ref == 'refs/heads/main' && needs.merge-playwright-report.result == 'success'
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -77,9 +96,8 @@ jobs:
 
       - name: Create fallback index.html if missing
         run: |
-          mkdir -p merged-report
           if [ ! -f merged-report/index.html ]; then
-            echo '<meta http-equiv="refresh" content="0; url=report.html">' > merged-report/index.html
+            echo '<html><head><meta http-equiv="refresh" content="0; url=report.html"><title>Playwright Report</title></head><body><p>Redirecting to <a href="report.html">test report</a>...</p></body></html>' > merged-report/index.html
           fi
 
       - name: Debug merged-report contents
@@ -90,4 +108,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: merged-report/
-          keep_files: true
+          keep_files: false
