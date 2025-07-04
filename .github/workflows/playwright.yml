@@ -55,57 +55,111 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install
+
       - name: Download all reports
         uses: actions/download-artifact@v4
         with:
           pattern: playwright-report-*
-          path: playwright-reports/
+          path: downloaded-reports/
           merge-multiple: true
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Debug downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find downloaded-reports/ -type f -name "*.json" || echo "No JSON files found"
+          ls -la downloaded-reports/ || echo "No downloaded-reports directory"
 
       - name: Merge Playwright Reports
         run: |
-          npx playwright merge-reports --reporter html playwright-reports/
-        continue-on-error: true
+          mkdir -p merged-output
+          if [ -d "downloaded-reports" ] && [ "$(find downloaded-reports -name '*.json' | wc -l)" -gt 0 ]; then
+            npx playwright merge-reports --reporter html --config playwright.config.js downloaded-reports/
+            mv playwright-report/* merged-output/ 2>/dev/null || true
+          else
+            echo "No reports to merge, creating empty report"
+            mkdir -p merged-output
+            echo '<html><head><title>No Tests Run</title></head><body><h1>No test reports available</h1></body></html>' > merged-output/index.html
+          fi
 
       - name: Upload merged report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: merged-playwright-report
-          path: playwright-report/
+          path: merged-output/
           retention-days: 30
 
   deploy-report:
-    needs: merge-playwright-report
+    needs: [test, merge-playwright-report]
     runs-on: ubuntu-latest
-    if: always() && github.ref == 'refs/heads/main' && needs.merge-playwright-report.result == 'success'
+    if: always() && github.ref == 'refs/heads/main' && (needs.merge-playwright-report.result == 'success' || needs.test.result == 'success')
     permissions:
       pages: write
       id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download merged report
+      - name: Try to download merged report
+        id: download-merged
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: merged-playwright-report
           path: merged-report
 
-      - name: Create fallback index.html if missing
+      - name: Fallback - Download individual reports if merged failed
+        if: steps.download-merged.outcome == 'failure'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: playwright-report-*
+          path: individual-reports/
+          merge-multiple: true
+
+      - name: Create report directory structure
         run: |
-          if [ ! -f merged-report/index.html ]; then
-            echo '<html><head><meta http-equiv="refresh" content="0; url=report.html"><title>Playwright Report</title></head><body><p>Redirecting to <a href="report.html">test report</a>...</p></body></html>' > merged-report/index.html
+          mkdir -p final-report
+          
+          # If merged report exists, use it
+          if [ -d "merged-report" ] && [ "$(ls -A merged-report)" ]; then
+            echo "Using merged report"
+            cp -r merged-report/* final-report/
+          # Otherwise, use individual reports
+          elif [ -d "individual-reports" ] && [ "$(ls -A individual-reports)" ]; then
+            echo "Using individual reports as fallback"
+            cp -r individual-reports/* final-report/
+          else
+            echo "No reports found, creating placeholder"
+            echo '<html><head><title>Test Reports</title></head><body><h1>No test reports available</h1><p>Tests may have failed to run or reports failed to generate.</p></body></html>' > final-report/index.html
           fi
 
-      - name: Debug merged-report contents
-        run: ls -al merged-report || echo "merged-report not found"
+      - name: Ensure index.html exists
+        run: |
+          if [ ! -f final-report/index.html ]; then
+            # Look for any HTML file to redirect to
+            html_file=$(find final-report -name "*.html" | head -1)
+            if [ -n "$html_file" ]; then
+              basename_html=$(basename "$html_file")
+              echo "<html><head><meta http-equiv=\"refresh\" content=\"0; url=$basename_html\"><title>Playwright Report</title></head><body><p>Redirecting to <a href=\"$basename_html\">test report</a>...</p></body></html>" > final-report/index.html
+            else
+              echo '<html><head><title>No Reports</title></head><body><h1>No HTML reports found</h1></body></html>' > final-report/index.html
+            fi
+          fi
+
+      - name: Debug final report contents
+        run: |
+          echo "Contents of final-report:"
+          ls -la final-report/ || echo "final-report directory not found"
+          find final-report/ -name "*.html" || echo "No HTML files found"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: merged-report/
+          publish_dir: final-report/
           keep_files: false
