@@ -75,6 +75,16 @@ jobs:
           name: merged-playwright-report
           path: merged-report
 
+      - name: Create fallback index.html if missing
+        run: |
+          mkdir -p merged-report
+          if [ ! -f merged-report/index.html ]; then
+            echo '<meta http-equiv="refresh" content="0; url=report.html">' > merged-report/index.html
+          fi
+
+      - name: Debug merged-report contents
+        run: ls -al merged-report || echo "merged-report not found"
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
