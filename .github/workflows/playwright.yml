@@ -78,7 +78,7 @@ jobs:
         run: |
           mkdir -p merged-output
           if [ -d "downloaded-reports" ] && [ "$(find downloaded-reports -name '*.json' | wc -l)" -gt 0 ]; then
-            npx playwright merge-reports --reporter html --config playwright.config.js downloaded-reports/
+            npx playwright merge-reports --reporter html --config playwright.config.ts downloaded-reports/
             mv playwright-report/* merged-output/ 2>/dev/null || true
           else
             echo "No reports to merge, creating empty report"
