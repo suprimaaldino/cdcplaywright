@@ -41,13 +41,14 @@
   "devDependencies": {
     "@applitools/eyes-playwright": "^1.37.3",
     "@playwright/test": "^1.53.2",
-    "@types/node": "^24.0.8",
+    "@types/node": "^24.0.10",
     "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.8.0",
     "dotenv": "^16.4.1",
     "eslint": "^8.57.0",
     "eslint-plugin-playwright": "^0.18.0",
     "playwright-merge-html-reports": "^0.2.8",
-    "typescript": "^5.4.5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }
