@@ -13,6 +13,9 @@ export class InventoryPage {
     readonly productContainer: (productName: string) => Locator;
     readonly addToCartButton: (productName: string) => Locator;
     readonly removeButton: (productName: string) => Locator;
+    readonly aboutLink: Locator;
+
+
     constructor(page: Page) {
         this.page = page;
 
@@ -24,6 +27,7 @@ export class InventoryPage {
         this.inventoryItems = page.locator('div.inventory_item');
         this.inventoryItemNames = page.locator('.inventory_item_name');
         this.sortDropdown = page.locator('.product_sort_container');
+        this.aboutLink = page.getByRole('link', { name: 'About' });
         this.productContainer = (productName: string) =>
             this.inventoryItems.filter({
                 has: this.page.getByText(productName, { exact: true })
