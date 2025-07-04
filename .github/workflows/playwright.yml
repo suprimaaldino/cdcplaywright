@@ -102,6 +102,9 @@ jobs:
       pages: write
       id-token: write
       contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -151,15 +154,14 @@ jobs:
             fi
           fi
 
-      - name: Debug final report contents
-        run: |
-          echo "Contents of final-report:"
-          ls -la final-report/ || echo "final-report directory not found"
-          find final-report/ -name "*.html" || echo "No HTML files found"
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: final-report/
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: final-report/
-          keep_files: false
+        id: deployment
+        uses: actions/deploy-pages@v4
