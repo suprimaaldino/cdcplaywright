@@ -35,12 +35,12 @@ jobs:
           CI: true
           TEST_SHARD: ${{ matrix.shard }}
 
-      - name: Upload test report
+      - name: Upload blob report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ matrix.shard }}
-          path: playwright-report/
+          name: blob-report-${{ matrix.shard }}
+          path: blob-report/
           retention-days: 7
 
   merge-playwright-report:
@@ -61,37 +61,36 @@ jobs:
       - name: Install Playwright
         run: npx playwright install
 
-      - name: Download all reports
+      - name: Download all blob reports
         uses: actions/download-artifact@v4
         with:
-          pattern: playwright-report-*
-          path: downloaded-reports/
+          pattern: blob-report-*
+          path: all-blob-reports/
           merge-multiple: true
 
       - name: Debug downloaded artifacts
         run: |
           echo "Downloaded artifacts:"
-          find downloaded-reports/ -type f -name "*.json" || echo "No JSON files found"
-          ls -la downloaded-reports/ || echo "No downloaded-reports directory"
+          ls -la all-blob-reports/ || echo "No all-blob-reports directory"
+          find all-blob-reports/ -name "*.zip" || echo "No zip files found"
 
       - name: Merge Playwright Reports
         run: |
-          mkdir -p merged-output
-          if [ -d "downloaded-reports" ] && [ "$(find downloaded-reports -name '*.json' | wc -l)" -gt 0 ]; then
-            npx playwright merge-reports --reporter html --config playwright.config.ts downloaded-reports/
-            mv playwright-report/* merged-output/ 2>/dev/null || true
+          if [ -d "all-blob-reports" ] && [ "$(find all-blob-reports -name '*.zip' | wc -l)" -gt 0 ]; then
+            echo "Merging reports..."
+            npx playwright merge-reports --reporter html all-blob-reports/
           else
-            echo "No reports to merge, creating empty report"
-            mkdir -p merged-output
-            echo '<html><head><title>No Tests Run</title></head><body><h1>No test reports available</h1></body></html>' > merged-output/index.html
+            echo "No blob reports to merge, creating empty report"
+            mkdir -p playwright-report
+            echo '<html><head><title>No Tests Run</title></head><body><h1>No test reports available</h1></body></html>' > playwright-report/index.html
           fi
 
-      - name: Upload merged report
+      - name: Upload merged HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: merged-playwright-report
-          path: merged-output/
+          path: playwright-report/
           retention-days: 30
 
   deploy-report:
@@ -108,38 +107,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Try to download merged report
-        id: download-merged
-        continue-on-error: true
+      - name: Download merged report
         uses: actions/download-artifact@v4
         with:
           name: merged-playwright-report
-          path: merged-report
-
-      - name: Fallback - Download individual reports if merged failed
-        if: steps.download-merged.outcome == 'failure'
-        uses: actions/download-artifact@v4
-        with:
-          pattern: playwright-report-*
-          path: individual-reports/
-          merge-multiple: true
-
-      - name: Create report directory structure
-        run: |
-          mkdir -p final-report
-          
-          # If merged report exists, use it
-          if [ -d "merged-report" ] && [ "$(ls -A merged-report)" ]; then
-            echo "Using merged report"
-            cp -r merged-report/* final-report/
-          # Otherwise, use individual reports
-          elif [ -d "individual-reports" ] && [ "$(ls -A individual-reports)" ]; then
-            echo "Using individual reports as fallback"
-            cp -r individual-reports/* final-report/
-          else
-            echo "No reports found, creating placeholder"
-            echo '<html><head><title>Test Reports</title></head><body><h1>No test reports available</h1><p>Tests may have failed to run or reports failed to generate.</p></body></html>' > final-report/index.html
-          fi
+          path: final-report
 
       - name: Ensure index.html exists
         run: |

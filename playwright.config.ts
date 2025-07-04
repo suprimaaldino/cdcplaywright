@@ -14,7 +14,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 4 : undefined,
-  reporter: [
+  reporter: process.env.CI ? [
+    // For CI: generate blob reports for merging
+    ['blob'],
+    ['list']
+  ] : [
+    // For local development: generate HTML reports
     ['list'],
     ['html', {
       outputFolder: 'playwright-report',
